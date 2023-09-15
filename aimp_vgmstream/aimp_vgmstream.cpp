@@ -4,7 +4,7 @@
 
 HRESULT __declspec(dllexport) WINAPI AIMPPluginGetHeader(IAIMPPlugin** Header) 
 {
-	*Header = new Plugin();
+	(*Header) = new Plugin();
 	(*Header)->AddRef();
 	return S_OK;
 }
@@ -13,7 +13,7 @@ HRESULT __declspec(dllexport) WINAPI AIMPPluginGetHeader(IAIMPPlugin** Header)
 
 HRESULT __stdcall Plugin::Initialize(IAIMPCore* Core)
 {
-	Core->RegisterExtension(IID_IAIMPServiceAudioDecoders, new DecoderExtension());
+	Core->RegisterExtension(IID_IAIMPServiceAudioDecoders, new DecoderExtension(Core));
 	Core->RegisterExtension(IID_IAIMPServiceFileFormats, new FileFormatsExtension(Core));
 	return S_OK;
 }
@@ -34,25 +34,36 @@ HRESULT __stdcall DecoderExtension::CreateDecoder(IAIMPString* filename, DWORD f
 	if (file == nullptr)
 		return E_FAIL;
 
+	fseek(file, 0, SEEK_END);
+	long fileSize = ftell(file);
+	fseek(file, 0, SEEK_SET);
+
 	_bstr_t ansiFileName(filename->GetData());
 	VGMSTREAM* vgmstream = vgmstream_open_file(file, ansiFileName);
 	if (vgmstream == nullptr)
 	{
-		fclose(file); // TODO: проверить, не надо ли это делать декодеру самому?
+		fclose(file); 
+		return E_FAIL;
+	}
+	if (vgmstream->num_samples == 0 || vgmstream->sample_rate == 0)
+	{
+		vgmstream_close(vgmstream);
 		return E_FAIL;
 	}
 
-	(*decoder) = new Decoder(vgmstream);
+	(*decoder) = new Decoder(core, vgmstream, fileSize);
 	(*decoder)->AddRef();
 	return S_OK;
 }
 
 // Decoder ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Decoder::Decoder(VGMSTREAM* stream)
+Decoder::Decoder(IAIMPCore* core, VGMSTREAM* stream, INT64 fileSize)
+	: CoreBasedObj(core)
 {
 	this->stream = stream;
 	this->bytesPerFrame = stream->channels * sizeof(sample);
+	this->fileSize = fileSize;
 }
 
 Decoder::~Decoder()
@@ -60,8 +71,24 @@ Decoder::~Decoder()
 	vgmstream_close(stream);
 }
 
-BOOL __stdcall Decoder::GetFileInfo(IAIMPFileInfo* FileInfo)
+BOOL __stdcall Decoder::GetFileInfo(IAIMPFileInfo* info)
 {
+	double duration = (double)stream->num_samples / (double)stream->sample_rate;
+	double bitrate = 8.0 * (double)fileSize / (double)duration;
+	info->SetValueAsInt32(AIMP_FILEINFO_PROPID_BITDEPTH, 16);
+	info->SetValueAsInt32(AIMP_FILEINFO_PROPID_BITRATE, (int)(bitrate / 1000.0));
+	info->SetValueAsInt32(AIMP_FILEINFO_PROPID_CHANNELS, stream->channels);
+	info->SetValueAsInt32(AIMP_FILEINFO_PROPID_SAMPLERATE, stream->sample_rate);
+	info->SetValueAsInt64(AIMP_FILEINFO_PROPID_FILESIZE, fileSize);
+	info->SetValueAsFloat(AIMP_FILEINFO_PROPID_DURATION, duration);
+
+	char buffer[128];
+	vgmstream_get_coding_description(stream, buffer, sizeof(buffer));
+	_bstr_t buffer_str(buffer);
+	IAIMPString* codec = makeString(buffer_str);
+	info->SetValueAsObject(AIMP_FILEINFO_PROPID_CODEC, codec);
+	if (codec != nullptr) codec->Release();
+
 	return true;
 }
 

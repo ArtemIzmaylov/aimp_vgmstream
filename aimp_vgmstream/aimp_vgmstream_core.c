@@ -26,3 +26,8 @@ AIMP_VGMSTREAM_API void vgmstream_seek(VGMSTREAM* vgmstream, int32_t seek_sample
 {
 	seek_vgmstream(vgmstream, seek_sample);
 }
+
+AIMP_VGMSTREAM_API void vgmstream_get_coding_description(VGMSTREAM* vgmstream, char* out, size_t out_size) 
+{
+	get_vgmstream_coding_description(vgmstream, out, out_size);
+}
