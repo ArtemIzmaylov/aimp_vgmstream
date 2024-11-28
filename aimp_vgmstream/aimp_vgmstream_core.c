@@ -11,6 +11,7 @@ AIMP_VGMSTREAM_API VGMSTREAM* vgmstream_open_file(FILE* file, const char* filena
 	STREAMFILE* sf = open_stdio_streamfile_by_file(file, filename);
 	if (sf)
 	{
+		sf->stream_index = 0;
 		vgmstream = init_vgmstream_from_STREAMFILE(sf);
 		close_streamfile(sf);
 	}

@@ -87,7 +87,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)aimp_sdk;$(SolutionDir)vgmstream\src;$(SolutionDir)vgmstream\ext_includes;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)Release;$(SolutionDir)vgmstream\ext_libs\dll-x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)x64\Release;$(SolutionDir)vgmstream\ext_libs\dll-x64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)build-msvc\$(Platform)-$(Configuration)\</IntDir>
   </PropertyGroup>

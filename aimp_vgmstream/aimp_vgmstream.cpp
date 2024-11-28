@@ -62,7 +62,7 @@ Decoder::Decoder(IAIMPCore* core, VGMSTREAM* stream, INT64 fileSize)
 	: CoreBasedObj(core)
 {
 	this->stream = stream;
-	this->bytesPerFrame = stream->channels * sizeof(sample);
+	this->bytesPerFrame = stream->channels * sizeof(sample_t);
 	this->fileSize = fileSize;
 }
 
@@ -127,5 +127,5 @@ int __stdcall Decoder::Read(void* Buffer, int Count)
 	int samples_read = max_samples;
 	if (stream->current_sample + max_samples > stream->num_samples)
 		samples_read = stream->num_samples - stream->current_sample;
-	return vgmstream_read((sample*)Buffer, samples_read, stream) * bytesPerFrame;
+	return vgmstream_read((sample_t*)Buffer, samples_read, stream) * bytesPerFrame;
 }
