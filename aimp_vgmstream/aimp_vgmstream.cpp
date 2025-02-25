@@ -30,7 +30,7 @@ HRESULT __stdcall DecoderExtension::CreateDecoder(IAIMPString* filename, DWORD f
 	if (decoder == nullptr)
 		return E_POINTER;
 
-	FILE* file = _wfopen(const_cast<wchar_t *>(filename->GetData()), L"r");
+	FILE* file = _wfopen(const_cast<wchar_t *>(filename->GetData()), L"rb");
 	if (file == nullptr)
 		return E_FAIL;
 
@@ -74,7 +74,7 @@ Decoder::~Decoder()
 BOOL __stdcall Decoder::GetFileInfo(IAIMPFileInfo* info)
 {
 	double duration = (double)stream->num_samples / (double)stream->sample_rate;
-	double bitrate = 8.0 * (double)fileSize / (double)duration;
+	double bitrate = vgmstream_get_average_bitrate(stream);
 	info->SetValueAsInt32(AIMP_FILEINFO_PROPID_BITDEPTH, 16);
 	info->SetValueAsInt32(AIMP_FILEINFO_PROPID_BITRATE, (int)(bitrate / 1000.0));
 	info->SetValueAsInt32(AIMP_FILEINFO_PROPID_CHANNELS, stream->channels);
